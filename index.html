@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EA Trading Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#0B0F19', // Background utama
+                            800: '#111827', // Card background
+                            700: '#1F2937', // Border/Hover
+                        },
+                        profit: '#10B981', // Hijau
+                        loss: '#EF4444',   // Merah
+                        accent: '#6366F1', // Biru/Ungu
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0B0F19; color: #F3F4F6; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
+    </style>
+</head>
+<body class="font-sans antialiased flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-dark-800 border-r border-dark-700 flex flex-col justify-between hidden md:flex">
+        <div>
+            <!-- Logo -->
+            <div class="h-20 flex items-center px-6 border-b border-dark-700">
+                <div class="w-8 h-8 rounded bg-accent flex items-center justify-center mr-3">
+                    <i class="fa-solid fa-robot text-white text-sm"></i>
+                </div>
+                <span class="text-xl font-bold tracking-wider">EA<span class="text-accent">Track</span></span>
+            </div>
+            
+            <!-- Menu -->
+            <nav class="p-4 space-y-1 mt-4">
+                <a href="#" class="flex items-center px-4 py-3 bg-dark-700 text-white rounded-lg transition-colors">
+                    <i class="fa-solid fa-chart-pie w-5 text-accent"></i>
+                    <span class="ml-3 font-medium">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-colors">
+                    <i class="fa-solid fa-arrow-right-arrow-left w-5"></i>
+                    <span class="ml-3 font-medium">Live Positions</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-colors">
+                    <i class="fa-solid fa-book w-5"></i>
+                    <span class="ml-3 font-medium">Trade Journal</span>
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 text-gray-400 hover:bg-dark-700 hover:text-white rounded-lg transition-colors">
+                    <i class="fa-solid fa-microchip w-5"></i>
+                    <span class="ml-3 font-medium">My EAs</span>
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Bottom Menu -->
+        <div class="p-4 border-t border-dark-700">
+            <a href="#" class="flex items-center px-4 py-3 text-gray-400 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-gear w-5"></i>
+                <span class="ml-3 font-medium">Settings</span>
+            </a>
+            <a href="#" class="flex items-center px-4 py-3 text-loss hover:text-red-400 rounded-lg transition-colors">
+                <i class="fa-solid fa-arrow-right-from-bracket w-5"></i>
+                <span class="ml-3 font-medium">Log Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <!-- HEADER -->
+        <header class="h-20 bg-dark-900 border-b border-dark-700 flex items-center justify-between px-8 sticky top-0 z-10">
+            <div class="flex items-center bg-dark-800 rounded-lg px-4 py-2 w-96 border border-dark-700 focus-within:border-accent transition-colors">
+                <i class="fa-solid fa-search text-gray-500"></i>
+                <input type="text" placeholder="Cari pair, EA, atau history..." class="bg-transparent border-none outline-none text-sm ml-3 w-full text-white placeholder-gray-500">
+            </div>
+            <div class="flex items-center space-x-6">
+                <button class="text-gray-400 hover:text-white relative">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-loss rounded-full"></span>
+                </button>
+                <div class="flex items-center space-x-3 border-l border-dark-700 pl-6">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-accent to-purple-500 flex items-center justify-center text-sm font-bold">
+                        TR
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold">Trader Pro</p>
+                        <p class="text-xs text-profit flex items-center"><span class="w-2 h-2 rounded-full bg-profit mr-1"></span> Connected (MT5)</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD CONTENT -->
+        <div class="p-8 space-y-6">
+            
+            <!-- ROW 1: METRICS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Total Balance -->
+                <div class="bg-dark-800 p-6 rounded-2xl border border-dark-700">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm font-medium mb-1">Total Balance</p>
+                            <h3 class="text-2xl font-bold">$10,450.00</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-accent">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-profit mt-4 flex items-center">
+                        <i class="fa-solid fa-arrow-up mr-1"></i> +2.5% hari ini
+                    </p>
+                </div>
+
+                <!-- Total Equity -->
+                <div class="bg-dark-800 p-6 rounded-2xl border border-dark-700">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm font-medium mb-1">Total Equity</p>
+                            <h3 class="text-2xl font-bold">$10,520.00</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-profit">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-profit mt-4">Floating P/L: +$70.00</p>
+                </div>
+
+                <!-- Open Positions -->
+                <div class="bg-dark-800 p-6 rounded-2xl border border-dark-700">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm font-medium mb-1">Open Positions</p>
+                            <h3 class="text-2xl font-bold">3</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-yellow-500">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-4">2 Buy, 1 Sell</p>
+                </div>
+
+                <!-- Win Rate -->
+                <div class="bg-dark-800 p-6 rounded-2xl border border-dark-700">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm font-medium mb-1">Win Rate</p>
+                            <h3 class="text-2xl font-bold">68%</h3>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center text-accent">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-1.5 mt-4">
+                        <div class="bg-accent h-1.5 rounded-full" style="width: 68%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Target: 75%</p>
+                </div>
+            </div>
+
+            <!-- ROW 2: CHARTS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Equity Growth Chart -->
+                <div class="lg:col-span-2 bg-dark-800 p-6 rounded-2xl border border-dark-700">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold">Equity Growth</h3>
+                        <select class="bg-dark-700 border border-dark-600 text-sm rounded-lg px-3 py-1 outline-none text-gray-300">
+                            <option>Bulan Ini</option>
+                            <option>3 Bulan Terakhir</option>
+                        </select>
+                    </div>
+                    <div id="equityChart"></div>
+                </div>
+
+                <!-- Portfolio Health -->
+                <div class="bg-dark-800 p-6 rounded-2xl border border-dark-700 flex flex-col items-center justify-center">
+                    <h3 class="text-lg font-semibold w-full text-left mb-2">Portfolio Health</h3>
+                    <div id="healthChart" class="w-full flex justify-center"></div>
+                    <div class="grid grid-cols-2 gap-4 w-full mt-4">
+                        <div class="flex items-center text-sm"><span class="w-2 h-2 rounded-full bg-profit mr-2"></span> Active EA (82.4%)</div>
+                        <div class="flex items-center text-sm"><span class="w-2 h-2 rounded-full bg-accent mr-2"></span> Idle (7.6%)</div>
+                        <div class="flex items-center text-sm"><span class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span> Drawdown (5.2%)</div>
+                        <div class="flex items-center text-sm"><span class="w-2 h-2 rounded-full bg-loss mr-2"></span> Loss (5.2%)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: TABLES -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Live Positions (KIRI) -->
+                <div class="lg:col-span-2 bg-dark-800 rounded-2xl border border-dark-700 overflow-hidden">
+                    <div class="p-6 border-b border-dark-700 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Live Positions</h3>
+                        <button class="text-sm text-accent hover:text-white transition-colors">Lihat Semua</button>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        
+                        <!-- Posisi 1 -->
+                        <div class="bg-dark-900 p-4 rounded-xl border border-dark-700 flex flex-col md:flex-row justify-between items-center">
+                            <div class="flex items-center space-x-4 w-full md:w-auto">
+                                <div class="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center font-bold text-lg">XAU</div>
+                                <div>
+                                    <h4 class="font-bold">XAUUSD <span class="text-xs font-normal text-gray-400 ml-2">0.10 Lot</span></h4>
+                                    <p class="text-sm text-gray-400">Entry: 2030.50 | Now: 2035.00</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-6 w-full md:w-auto mt-4 md:mt-0 justify-between md:justify-end">
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-500 mb-1">SL</p>
+                                    <p class="text-loss font-semibold">2025.00</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-500 mb-1">TP</p>
+                                    <p class="text-profit font-semibold">2040.00</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500 mb-1">P/L</p>
+                                    <p class="text-profit font-bold">+$45.00</p>
+                                </div>
+                                <button class="bg-dark-700 hover:bg-loss text-xs px-3 py-1.5 rounded transition-colors">Close</button>
+                            </div>
+                        </div>
+
+                        <!-- Posisi 2 -->
+                        <div class="bg-dark-900 p-4 rounded-xl border border-dark-700 flex flex-col md:flex-row justify-between items-center">
+                            <div class="flex items-center space-x-4 w-full md:w-auto">
+                                <div class="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center font-bold text-lg">GBP</div>
+                                <div>
+                                    <h4 class="font-bold">GBPUSD <span class="text-xs font-normal text-gray-400 ml-2">0.50 Lot</span></h4>
+                                    <p class="text-sm text-gray-400">Entry: 1.2150 | Now: 1.2130</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-6 w-full md:w-auto mt-4 md:mt-0 justify-between md:justify-end">
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-500 mb-1">SL</p>
+                                    <p class="text-loss font-semibold">1.2200</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-500 mb-1">TP</p>
+                                    <p class="text-profit font-semibold">1.2000</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500 mb-1">P/L</p>
+                                    <p class="text-loss font-bold">-$20.00</p>
+                                </div>
+                                <button class="bg-dark-700 hover:bg-loss text-xs px-3 py-1.5 rounded transition-colors">Close</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Trade Journal (KANAN) -->
+                <div class="bg-dark-800 rounded-2xl border border-dark-700 overflow-hidden">
+                    <div class="p-6 border-b border-dark-700 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Trade Journal</h3>
+                        <button class="text-sm text-accent hover:text-white transition-colors">Lihat Semua</button>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        
+                        <!-- History 1 -->
+                        <div class="flex items-center justify-between p-3 hover:bg-dark-700 rounded-lg transition-colors cursor-pointer">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-profit/20 flex items-center justify-center text-profit">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">GBPUSD - SELL</p>
+                                    <p class="text-xs text-gray-500">14 Oct 2023 • Scalper V2</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-profit font-bold text-sm">+$120.00</p>
+                                <p class="text-xs text-gray-500">TP HIT</p>
+                            </div>
+                        </div>
+
+                        <!-- History 2 -->
+                        <div class="flex items-center justify-between p-3 hover:bg-dark-700 rounded-lg transition-colors cursor-pointer">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-loss/20 flex items-center justify-center text-loss">
+                                    <i class="fa-solid fa-xmark text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">EURUSD - BUY</p>
+                                    <p class="text-xs text-gray-500">13 Oct 2023 • Grid Master</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-loss font-bold text-sm">-$50.00</p>
+                                <p class="text-xs text-gray-500">SL HIT</p>
+                            </div>
+                        </div>
+
+                        <!-- History 3 -->
+                        <div class="flex items-center justify-between p-3 hover:bg-dark-700 rounded-lg transition-colors cursor-pointer">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-profit/20 flex items-center justify-center text-profit">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm">XAUUSD - BUY</p>
+                                    <p class="text-xs text-gray-500">12 Oct 2023 • Scalper V2</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-profit font-bold text-sm">+$210.00</p>
+                                <p class="text-xs text-gray-500">TP HIT</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- SCRIPT UNTUK CHART -->
+    <script>
+        // 1. Equity Growth Chart (Area Chart)
+        var equityOptions = {
+            series: [{
+                name: 'Equity',
+                data: [10000, 10100, 10050, 10200, 10350, 10300, 10450, 10520]
+            }, {
+                name: 'Target',
+                data: [10000, 10150, 10300, 10450, 10600, 10750, 10900, 11050]
+            }],
+            chart: {
+                type: 'area',
+                height: 300,
+                toolbar: { show: false },
+                background: 'transparent'
+            },
+            colors: ['#6366F1', '#374151'], // Accent dan Abu-abu untuk target
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.4,
+                    opacityTo: 0.05,
+                    stops: [0, 90, 100]
+                }
+            },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 2, dashArray: [0, 4] },
+            xaxis: {
+                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags'],
+                labels: { style: { colors: '#9CA3AF' } },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: {
+                labels: { 
+                    style: { colors: '#9CA3AF' },
+                    formatter: function (value) { return "$" + value; }
+                }
+            },
+            grid: { borderColor: '#1F2937', strokeDashArray: 4 },
+            legend: { labels: { colors: '#9CA3AF' } },
+            tooltip: { theme: 'dark' }
+        };
+
+        var equityChart = new ApexCharts(document.querySelector("#equityChart"), equityOptions);
+        equityChart.render();
+
+
+        // 2. Portfolio Health Chart (Donut Chart)
+        var healthOptions = {
+            series: [82.4, 7.6, 5.2, 5.2],
+            chart: {
+                type: 'donut',
+                height: 250,
+                background: 'transparent'
+            },
+            labels: ['Active', 'Idle', 'Drawdown', 'Loss'],
+            colors: ['#10B981', '#6366F1', '#F59E0B', '#EF4444'],
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '75%',
+                        labels: {
+                            show: true,
+                            name: { show: false },
+                            value: {
+                                show: true,
+                                fontSize: '24px',
+                                fontWeight: 600,
+                                color: '#F3F4F6',
+                                formatter: function (val) { return val + "%" }
+                            },
+                            total: {
+                                show: true,
+                                label: 'Health',
+                                color: '#9CA3AF',
+                                formatter: function (w) {
+                                    return '82%'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            dataLabels: { enabled: false },
+            legend: { show: false }, // Kita buat legend manual di HTML
+            stroke: { show: false },
+            tooltip: { theme: 'dark' }
+        };
+
+        var healthChart = new ApexCharts(document.querySelector("#healthChart"), healthOptions);
+        healthChart.render();
+    </script>
+</body>
+                  </html>
